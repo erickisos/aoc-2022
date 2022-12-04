@@ -5,7 +5,8 @@
 
 (def days {1 {:fn    aoc.day-01/main
               :input "01D-01.txt"}
-           2 {:fn aoc.day-02/main}})
+           2 {:fn    aoc.day-02/main
+              :input "02D-01.txt"}})
 
 (defn main
   [day]
@@ -14,4 +15,4 @@
         day-filename (:input current)]
     (day-fn day-filename)))
 
-(main 1)
+(main 2)
