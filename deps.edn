@@ -1,0 +1,3 @@
+{:paths   [:project-paths :resources-paths]
+ :aliases {:project-paths   ["src"]
+           :resources-paths ["resources"]}}
