@@ -4,10 +4,14 @@
   [separated-foods]
   (->> separated-foods
        (map parse-long)
-       (partition-by nil?)
-       (map #(filter int? %))
-       (filter seq)))
+       (partition-by nil?)))
 
-(defn total-calories
+(defn sum-calories
   [foods]
-  (reduce + foods))
+  (apply + foods))
+
+(defn safe-max
+  [total-calories]
+  (->> total-calories
+       (filter #(not (nil? %)))
+       (apply max)))

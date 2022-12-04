@@ -1,21 +1,22 @@
 (ns aoc.main
-  (:require [aoc.elves :refer [segment total-calories]]
+  (:require [aoc.elves :refer [safe-max segment sum-calories]]
             [aoc.file :refer [load!]]))
 
 
 (defn day-01
-  []
-  (->> "01D-01.txt"
+  [filename]
+  (->> filename
        load!
        segment
-       (map total-calories)
-       (sort >)
-       (take 3)))
+       (map sum-calories)
+       safe-max))
 
-(def days {:day-01 day-01})
+(def days {1 {:fn    day-01
+              :input "01D-01.txt"}})
 
 (defn main
   [day]
-  (let [day-fn (get days day)]
-    (day-fn)))
-
+  (let [current   (get days day)
+        day-fn    (:fn current)
+        day-input (:input current)]
+    (day-fn day-input)))
