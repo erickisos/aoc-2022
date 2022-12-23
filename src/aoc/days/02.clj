@@ -1,85 +1,42 @@
 (ns aoc.days.02
   (:require [aoc.file :refer [load!]]
+            [clojure.set :as set]
             [clojure.string :as str]))
-
-(def IN {"A" :rock
-         "B" :paper
-         "C" :scissors})
-(def ANS {"X" :rock
-          "Y" :paper
-          "Z" :scissors})
-(def ANS-END {"X" :lose
-              "Y" :draw
-              "Z" :win})
-(def STATUS-POINTS {:win  6
-                    :draw 3
-                    :lose 0})
-(def SELECTION-POINTS {:rock     1
-                       :paper    2
-                       :scissors 3})
-(def CONDITIONS
-  {:rock     {:paper    :win
-              :scissors :lose
-              :rock     :draw}
-   :paper    {:paper    :draw
-              :scissors :win
-              :rock     :lose}
-   :scissors {:paper    :lose
-              :scissors :draw
-              :rock     :win}})
-(def CONDITIONS-BY-RES
-  {:rock     {:win  :paper
-              :draw :rock
-              :lose :scissors}
-   :scissors {:win  :rock
-              :draw :scissors
-              :lose :paper}
-   :paper    {:win  :scissors
-              :draw :paper
-              :lose :rock}})
-
-(defn status
-  [opponent you]
-  (get-in CONDITIONS [opponent you]))
 
 (defn with-points
   [{:keys [status selection] :as turn}]
-  (assoc turn :points (+ (status STATUS-POINTS)
-                         (selection SELECTION-POINTS))))
+  (assoc turn :points (+ (get {:win 6 :draw 3 :lose 0} status)
+                         (get {:rock 1 :paper 2 :scissors 3} selection))))
 
-(defn select-from-ans
-  [selection _opponent]
-  (get ANS selection))
-
-(defn select-from-res
-  [selection opponent]
-  (get-in CONDITIONS-BY-RES [opponent (get ANS-END selection)]))
-
-(defn ->simple-turn
-  [row your-selector]
-  (let [[opponent-sel your-mov] (str/split row #" ")
-        opponent (get IN opponent-sel)
-        you      (your-selector your-mov opponent)
-        turn     {:status    (status opponent you)
-                  :selection you}]
-    (with-points turn)))
-
-(defn part-01
+(defn count-points
   [turns]
-  (->> turns
-       (map #(->simple-turn % select-from-ans))
-       (map :points)
-       (apply +)))
+  (apply + (map :points (map with-points turns))))
 
-(defn part-02
-  [turns]
-  (->> turns
-       (map #(->simple-turn % select-from-res))
-       (map :points)
-       (apply +)))
+(defn build-turn
+  [input key conditions options]
+  (let [[opponent-str selected-str] (str/split input #" ")
+        opponent-k    (get {"A" :rock "B" :paper "C" :scissors} opponent-str)
+        selected-opt  (get options selected-str)
+        secondary-opt (get-in conditions [opponent-k selected-opt])
+        results       (cond-> [selected-opt secondary-opt] (= key :selection) reverse)]
+    (zipmap [:status :selection] results)))
+
+(defn build-and-count
+  [turns key conditions options]
+  (count-points (map #(build-turn % key conditions options) turns)))
 
 (defn main
   [filename]
-  (let [turns (load! filename)]
-    {:part-01 (part-01 turns)
-     :part-02 (part-02 turns)}))
+  (let [turns (load! filename)
+        conditions {:rock     {:paper    :win
+                               :scissors :lose
+                               :rock     :draw}
+                    :paper    {:paper    :draw
+                               :scissors :win
+                               :rock     :lose}
+                    :scissors {:paper    :lose
+                               :scissors :draw
+                               :rock     :win}}
+        cond-by-res (update-vals conditions set/map-invert)]
+    {:part-01 (build-and-count turns :selection conditions {"X" :rock "Y" :paper "Z" :scissors})
+     :part-02 (build-and-count turns :status cond-by-res {"X" :lose "Y" :draw "Z" :win})}))
